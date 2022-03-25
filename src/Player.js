@@ -18,7 +18,7 @@ class FullControl extends React.Component {
       loaded: false,
       loop: false,
       mute: false,
-      volume: 1.0,
+      volume: 0.1,
       seek: 0.0,
       rate: 1,
       isSeeking: false,
@@ -27,23 +27,6 @@ class FullControl extends React.Component {
 
   componentWillUnmount() {
     this.clearRAF();
-  }
-
-  // On update
-  componentDidUpdate() {
-    // if isPlayAll is signaled, and we are not playing, start playing:
-    if (this.props.isPlayAll && !this.state.playing) {
-      this.setState({ playing: true }); // start playing.
-      // we need to turn the signal off on the parent side using the "handlePlayAll" function recived.
-      this.props.handlePlayAll(); // signal Parent component that we reacted to the signal,
-      // and reset the signal to false
-    }
-
-    // if parent signaled isStopALl, we neet to stop the player, and signal back we stopped.
-    if (this.props.isStopAll) {
-      this.setState({ playing: false }); // stop the player
-      this.props.handleStopAll(); // signal we stopped.
-    }
   }
 
   // Handles play/pause button
@@ -56,6 +39,12 @@ class FullControl extends React.Component {
 
   // Callback function when player finished loading
   handleOnLoad = () => {
+    // when finished loading the audio file
+    // pass the start + stop handlers to the parent.
+    this.props.pushStartHandler(this.handleOnPlay)
+    this.props.pushStopHandler(this.handleStop)
+
+    // set the state for loaded, and the duration from the player.
     this.setState({
       loaded: true,
       duration: this.player.duration(),
@@ -113,7 +102,7 @@ class FullControl extends React.Component {
       isSeeking: false,
     });
 
-    this.player.seek(e.target.value); // change the player location to the dropped location of the slider.
+    this.player.seek(e.target.value % this.state.duration); // change the player location to the dropped location of the slider.
   };
 
   // change the current position of the Audio [seek location]
@@ -163,7 +152,9 @@ class FullControl extends React.Component {
             loop={this.state.loop}
             mute={this.state.mute}
             volume={this.state.volume}
-            ref={(ref) => (this.player = ref)}
+            ref={(ref) => {
+              this.player = ref;
+            }}
           />
 
           <div className="toggles">
@@ -191,7 +182,7 @@ class FullControl extends React.Component {
               textAlign: "center",
             }}
           >
-            <label> 
+            <label>
               <span className="slider-container">
                 <input
                   type="range"

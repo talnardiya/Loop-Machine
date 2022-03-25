@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./App.css";
 import FullControl from "./Player";
 
@@ -19,11 +19,6 @@ const getUrls = () => {
 };
 // 1.Initial state object
 // this state is later used to signal the players to stop / play togther.
-const initialState = {
-  isPlayAll: false,
-  isStopAll: false,
-};
-
 const getRandomColor = () => {
   var letters = "0123456789ABCDEF";
   var color = "#";
@@ -39,44 +34,25 @@ for (let i = 0; i < AMOUNT_OF_PLAYERS; i++) {
   colors.push(getRandomColor());
 }
 const App = () => {
-  // 1.initialize the state
-  const [allActions, setAllActions] = useState(initialState);
+  // holding handlers to control the handlers
+  const startHandlers = [];
+  const stopHandlers = [];
 
-  //  set the signal to all start playing, also making sure stop all is false.
-  const setPlayAll = () => {
-    setAllActions({
-      ...allActions,
-      isPlayAll: true,
-      isStopAll: false,
-    });
-  };
+ // functions that childrens [players] will use to return the handlers to the parent
+  const pushStartHandler = (handler) => {
+    startHandlers.push(handler)
+  }
+  const pushStopHandler = (handler) => {
+    stopHandlers.push(handler)
+  }
 
-  //  set the signal to all stop playing, also making sure play all is false.
-  const setStopAll = () => {
-    setAllActions({
-      ...allActions,
-      isStopAll: true,
-      isPlayAll: false,
-    });
-  };
-
-  // this function is used by the players [childrens]
-  // signaling they stopped playing
-  const handleStopAll = () => {
-    setAllActions({
-      ...allActions,
-      isStopAll: false,
-    });
-  };
-
-  // this function is used by the players [childrens]
-  // signaling they started playing
-  const handlePlayAll = () => {
-    setAllActions({
-      ...allActions,
-      isPlayAll: false, // changed from false to true and each ch is stopping when i click stop after stop all.
-    });
-  };
+  // functions to use the handlers on the parent side.
+  const startAllPlayers = () => {
+    startHandlers.map(startHandler => startHandler())
+  }
+  const stopAllPlayers = () => {
+    stopHandlers.map(stopHandler => stopHandler())
+  }
 
   return (
     <div>
@@ -89,18 +65,16 @@ const App = () => {
               backGroundColor={colors[index]} // take the colors
               id={index} // Providing unique ID for each player(FullControl)
               src={url} // Audio file endpoint
-              isPlayAll={allActions.isPlayAll} // do we play all songs simultaneously.
-              isStopAll={allActions.isStopAll} // do we stop all songs simultaneously.
-              handleStopAll={handleStopAll} // callback to signal finish of action stop-all.
-              handlePlayAll={handlePlayAll} // callback to signal finish of action play-all.
+              pushStopHandler={pushStopHandler} // pass the stop handler to the children
+              pushStartHandler={pushStartHandler} // pass the start handler to the children
             />
           </div>
         ))
       }
       <div>
         {/* Creating two buttons which on-click will play all songs or stop all songs. */}
-        <button onClick={setPlayAll}>Play All</button>
-        <button onClick={setStopAll}>Stop All</button>
+        <button onClick={startAllPlayers}>Play All</button>
+        <button onClick={stopAllPlayers}>Stop All</button>
       </div>
     </div>
   );
